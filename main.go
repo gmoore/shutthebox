@@ -21,10 +21,9 @@ func main() {
   gameOver := false
 
   for !gameOver {
-    PrintTiles(tiles)
     die1 := Roll()
     die2 := Roll()
-    PrintRoll(die1, die2)
+    PrintBox(tiles, die1, die2)
     moves := AvailableMoves(tiles, die1, die2)
     moves = LegalMoves(tiles, moves)
 
@@ -43,7 +42,9 @@ func main() {
 }
 
 func DoGameOver(tiles []*Tile) {
-  fmt.Println(" ++-- GAME OVER --++")
+  fmt.Println("")
+  fmt.Println("                            ++-- GAME OVER --++")
+  fmt.Println("")
 }
 
 func GetChoice() int {
@@ -51,10 +52,6 @@ func GetChoice() int {
   fmt.Printf("Pick move >")
   fmt.Scan(&selection) 
   return selection 
-}
-
-func PrintRoll(die1 int, die2 int) {
-  fmt.Printf(" ROLL-> [%v] [%v]\n", die1, die2)
 }
 
 func SetupTiles() []*Tile {
@@ -115,7 +112,9 @@ func LegalMoves(tiles []*Tile, moves []*Move) []*Move {
 
 func LegalMove(tiles []*Tile, move *Move) bool {
   for _, num := range move.numbers {
-    if (!tiles[num-1].open) {
+    if (num > 9) {
+      return false;
+    } else if (!tiles[num-1].open) {
       return false;
     }
   }
@@ -149,14 +148,28 @@ func CloseTiles(tiles []*Tile, moves []*Move, choice int) {
   }
 }
 
+func PrintBox(tiles []*Tile, die1 int, die2 int) {
+  PrintTiles(tiles)
+  PrintRoll(die1, die2)
+}
+
+func PrintRoll(die1 int, die2 int) {
+  fmt.Print  ("                   |                                     |\n")
+  fmt.Print  ("                   | ")
+  fmt.Printf ("       [%v] [%v]", die1, die2)
+  fmt.Print  ("                      |\n")
+  fmt.Print  ("                   |                                     |\n")
+  fmt.Println("                   +-------------------------------------+")
+
+}
+
 func PrintTiles(tiles []*Tile) {  
 
-  fmt.Println(" +-------------------------------------+")
-  fmt.Print  (" | ")
+  fmt.Println("                   +-------------------------------------+")
+  fmt.Print  ("                   | ")
 
   for i := 0; i < 9; i++ {
     tile := tiles[i]
-
     if (tile.open) {
       fmt.Printf("[%v] ", tile.number)
     } else {
@@ -165,6 +178,5 @@ func PrintTiles(tiles []*Tile) {
   }
 
   fmt.Print  ("|\n")
-  fmt.Println(" +-------------------------------------+")
-  fmt.Println("\n")
+  fmt.Println("                   +-------------------------------------+")
 }
