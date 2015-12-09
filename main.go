@@ -16,15 +16,18 @@ type Move struct{
   numbers []int
 }
 
+type Dice struct {
+  die []int
+}
+
 func main() {
   tiles := SetupTiles()
   gameOver := false
 
   for !gameOver {
-    die1 := Roll()
-    die2 := Roll()
-    PrintBox(tiles, die1, die2)
-    moves := AvailableMoves(tiles, die1, die2)
+    dice := Roll(2)
+    PrintBox(tiles, dice)
+    moves := AvailableMoves(tiles, dice)
     moves = LegalMoves(tiles, moves)
 
     if(len(moves) == 0) {
@@ -67,13 +70,21 @@ func SetupTiles() []*Tile {
   return tiles
 }
 
-func AvailableMoves(tiles []*Tile, die1 int, die2 int) []*Move {
-  total := (die1 + die2)
+func AvailableMoves(tiles []*Tile, dice *Dice) []*Move {
+  total := Total(dice)
   moves := Partition(total, nil)
   move := new(Move)
   move.numbers = []int{total}
   moves = append(moves, move)
   return moves
+}
+
+func Total(dice *Dice) int {
+  total := 0
+  for _,num := range dice.die {
+    total += num
+  }
+  return total
 }
 
 func Partition(num int, prepend []int) []*Move {
@@ -135,9 +146,16 @@ func PrintMove(idx int, move *Move) {
   fmt.Printf("\n")
 }
 
-func Roll() int {
+func Roll(howMany int) *Dice {
   rand.Seed( time.Now().UTC().UnixNano())
-  return int(rand.Int31n(6) + 1)
+  dice := new(Dice)
+  dice.die = make([]int, 0, 5)
+
+  for x:=0; x<howMany; x++ {
+    dice.die = append(dice.die, int(rand.Int31n(6) + 1))
+  }
+  
+  return dice
 }
 
 func CloseTiles(tiles []*Tile, moves []*Move, choice int) {
@@ -148,16 +166,20 @@ func CloseTiles(tiles []*Tile, moves []*Move, choice int) {
   }
 }
 
-func PrintBox(tiles []*Tile, die1 int, die2 int) {
+func PrintBox(tiles []*Tile, dice *Dice) {
   PrintTiles(tiles)
-  PrintRoll(die1, die2)
+  PrintRoll(dice)
 }
 
-func PrintRoll(die1 int, die2 int) {
+func PrintRoll(dice *Dice) {
   fmt.Print  ("                   |                                     |\n")
   fmt.Print  ("                   | ")
-  fmt.Printf ("       [%v] [%v]", die1, die2)
-  fmt.Print  ("                      |\n")
+  fmt.Printf ("       ")
+  for _,die := range dice.die {
+    fmt.Printf ("[%v] ", die)
+  }
+
+  fmt.Print  ("                     |\n")
   fmt.Print  ("                   |                                     |\n")
   fmt.Println("                   +-------------------------------------+")
 
