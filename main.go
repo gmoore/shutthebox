@@ -13,25 +13,26 @@ type Tile struct {
 }
 
 type Move struct{
-  number1 int
-  number2 int
+  numbers []int
 }
 
 func main() {
   tiles := SetupTiles()
   gameOver := false
 
-  for ;!gameOver;{
+  for !gameOver {
     PrintTiles(tiles)
     die1 := Roll()
     die2 := Roll()
     PrintRoll(die1, die2)
     moves := AvailableMoves(tiles, die1, die2)
+    moves = LegalMoves(tiles, moves)
 
     if(len(moves) == 0) {
       gameOver = true
       break
     }
+    PrintLegalMoves(moves)
 
     choice := GetChoice()
     CloseTiles(tiles, moves, choice)
@@ -71,49 +72,68 @@ func SetupTiles() []*Tile {
 
 func AvailableMoves(tiles []*Tile, die1 int, die2 int) []*Move {
   total := (die1 + die2)
-  moves := make([]*Move, 0, 5)
+  moves := Partition(total, nil)
+  move := new(Move)
+  move.numbers = []int{total}
+  moves = append(moves, move)
+  return moves
+}
 
-  for x := 1; x <= ((total - 1)/ 2); x++ {
-    if (total-x < 10) {
-      move := new(Move)
-      move.number1 = x
-      move.number2 = total-x
-      if(LegalMove(tiles, move)) {
-        moves = append(moves, move)
-      }
-    }
+func Partition(num int, prepend []int) []*Move {
+  moves := make([]*Move, 0, 10)
+  start := 1
+
+  if prepend != nil {
+    start = prepend[len(prepend) - 1] + 1
   }
 
-  if (total < 10) {
+  for x := start; x <= ((num - 1)/ 2); x++ {
     move := new(Move)
-    move.number1 = total
-    if(LegalMove(tiles, move)) {
-      moves = append(moves, move)
-    }
-  }
 
-  fmt.Println("-- MOVES --")
-  for idx, move := range moves {
-    PrintMove(idx, move)
+    if prepend != nil {
+      move.numbers = append(move.numbers, prepend...)
+    } 
+    move.numbers = append(move.numbers, x)
+    move.numbers = append(move.numbers, num - x)
+
+    moves = append(moves, move)
+    moves = append(moves, Partition(num - x, move.numbers[0:(len(move.numbers)-1)])...)
   }
 
   return moves
 }
 
-func LegalMove(tiles []*Tile, move *Move) bool {
-  if (move.number2 > 0) {
-    return tiles[move.number1 - 1].open && tiles[move.number2 - 1].open
-  } else {
-    return tiles[move.number1 - 1].open
+func LegalMoves(tiles []*Tile, moves []*Move) []*Move {
+  outMoves := make([]*Move, 0, 10)
+  for _, move := range moves {
+    if (LegalMove(tiles, move)) {
+      outMoves = append(outMoves, move)
+    }
   }
+  return outMoves;  
+}
+
+func LegalMove(tiles []*Tile, move *Move) bool {
+  for _, num := range move.numbers {
+    if (!tiles[num-1].open) {
+      return false;
+    }
+  }
+  return true;
+}
+
+func PrintLegalMoves(moves []*Move) {
+  for idx, move := range moves {
+    PrintMove(idx, move)
+  }  
 }
 
 func PrintMove(idx int, move *Move) {
-  if (move.number2 > 0) {
-    fmt.Printf("%v> %v %v \n", idx, move.number1, move.number2  )
-  } else {
-    fmt.Printf("%v> %v \n", idx, move.number1)
+  fmt.Printf("%v> ", idx)
+  for _, num := range move.numbers {
+    fmt.Printf("%v ", num)
   }
+  fmt.Printf("\n")
 }
 
 func Roll() int {
@@ -124,12 +144,8 @@ func Roll() int {
 func CloseTiles(tiles []*Tile, moves []*Move, choice int) {
   move := moves[choice]
 
-  for i := 0; i < 9; i++ {
-    tile := tiles[i]
-
-    if (tile.number == move.number1 || tile.number == move.number2) {
-      tile.open = false
-    }
+  for _, num := range move.numbers {
+    tiles[num-1].open = false;
   }
 }
 
